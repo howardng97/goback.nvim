@@ -49,9 +49,9 @@ function M.return_last_leave(S, config)
 end
 
 -- Register the GoBackLast user command
-function M.setup_user_commands()
+function M.setup_user_commands(S, config)
 	vim.api.nvim_create_user_command("GoBackLast", function()
-		M.return_last_leave(S, M.config)
+		M.return_last_leave(S, config)
 	end, {})
 end
 

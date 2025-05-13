@@ -56,7 +56,7 @@ function M.setup(opts)
 
 	-- Import and setup user commands
 	local commands = require("goback.commands")
-	commands.setup_user_commands()
+	commands.setup_user_commands(S, M.config)
 
 	print("GoBackLast plugin loaded!")
 end
