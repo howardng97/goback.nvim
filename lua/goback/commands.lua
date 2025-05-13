@@ -26,6 +26,9 @@ function M.return_last_leave(S, config)
 		return
 	end
 
+	-- Set flag
+	S.is_returning = true
+
 	-- Switch to the saved tab if configured
 	if config.save_tab and S["last"].tab then
 		safe_set_tab(S["last"].tab)
@@ -46,6 +49,9 @@ function M.return_last_leave(S, config)
 	else
 		print("Unable to set the cursor!")
 	end
+
+	-- Unset the flag
+	S.is_returning = false
 end
 
 -- Register the GoBackLast user command
