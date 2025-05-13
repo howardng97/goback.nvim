@@ -19,21 +19,31 @@ local function safe_set_tab(tabnr)
   end
 end
 
--- Check if in split mode
+-- Check if the current window is a valid buffer window
+local function is_valid_window(win_id)
+  local buftype = vim.api.nvim_buf_get_option(vim.api.nvim_win_get_buf(win_id), "buftype")
+  return buftype == "" -- Chỉ lấy các cửa sổ chứa buffer thông thường
+end
+
+-- Check if in split mode (more than one window)
 local function is_split_mode()
   return vim.fn.winnr("$") > 1
 end
 
--- Find the window that contains the last buffer
-local function find_window_with_buf(bufnr)
+-- Find the window that contains the last buffer and is a valid buffer window
+local function find_window_with_buf(bufnr, last_win_id)
   for _, win_id in ipairs(vim.api.nvim_list_wins()) do
-    if vim.api.nvim_win_is_valid(win_id) and vim.api.nvim_win_get_buf(win_id) == bufnr then
-      return win_id
+    if vim.api.nvim_win_is_valid(win_id) and is_valid_window(win_id) then
+      local win_buf = vim.api.nvim_win_get_buf(win_id)
+      if win_buf == bufnr and win_id ~= last_win_id then
+        return win_id
+      end
     end
   end
   return nil
 end
 
+-- Main function to return to the last position
 function M.return_last_leave(S, config)
   if not S["last"] then
     print("No previous position to return to!")
@@ -51,7 +61,7 @@ function M.return_last_leave(S, config)
   -- Check if in split mode and find the window containing the last buffer
   local win_id = nil
   if is_split_mode() then
-    win_id = find_window_with_buf(S["last"].buf)
+    win_id = find_window_with_buf(S["last"].buf, S["last"].win)
   end
 
   -- If window not found or not in split mode, use the saved window ID
@@ -59,18 +69,21 @@ function M.return_last_leave(S, config)
     win_id = S["last"].win
   end
 
-  -- If window is valid, set it as the current window
+  -- Set window if valid
   if win_id and vim.api.nvim_win_is_valid(win_id) then
     vim.api.nvim_set_current_win(win_id)
   else
     print("Window does not exist or is not valid!")
-    -- Fallback: Open the buffer in the current window
+  end
+
+  -- Ensure the buffer is set correctly within the selected window
+  if vim.api.nvim_win_get_buf(win_id) ~= S["last"].buf then
     safe_set_buf(S["last"].buf)
   end
 
   -- Restore cursor position
   if S["last"].buf_cursor then
-    vim.api.nvim_win_set_cursor(win_id or 0, S["last"].buf_cursor)
+    vim.api.nvim_win_set_cursor(win_id, S["last"].buf_cursor)
   else
     print("Unable to set the cursor!")
   end
